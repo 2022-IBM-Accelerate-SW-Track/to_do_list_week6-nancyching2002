@@ -1,3 +1,34 @@
+const basicAuth = require("express-basic-auth");
+var { authenticator, upsertUser, cookieAuth } = require("./authentication");
+const auth = basicAuth({
+    authorizer: authenticator
+});
+const cookieParser = require("cookie-parser");
+app.use(cookieParser("82e4e438a0705fabf61f9854e3b575af"));
+
+app.use(cors({
+  credentials: true,
+  origin: 'http://localhost:3000'
+}));
+
+app.get("/authenticate", auth, (req, res) => {
+  console.log(`user logging in: ${req.auth.user}`);
+  res.cookie('user', req.auth.user, { signed: true });
+  res.sendStatus(200);
+});
+
+app.post("/users", (req, res) => {
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || ''
+  const [username, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+  const upsertSucceeded = upsertUser(username, password)
+  res.sendStatus(upsertSucceeded ? 200 : 401);
+});
+
+app.get("/logout", (req, res) => {
+  res.clearCookie('user');
+  res.end();
+});
+
 const express = require("express"),
        app = express(),
        port = process.env.PORT || 8080,
@@ -44,13 +75,11 @@ app.get("/get/items", getItems)
 //** week5, get all items from the json database*/
   function getItems (request, response) {
     //begin here
-    var data = fs.readFileSync('database.json');
-    
-    //uncomment to see the data being returned 
-    //console.log(JSON.parse(data));
+    var data = fs.readFileSync('database.json'); 
+    console.log(JSON.parse(data));
 
     response.json(JSON.parse(data));
-    // Note this won't work, why? response.send();
+    response.send();
   } 
 
 app.get("/get/searchitem",searchItems)
@@ -58,14 +87,14 @@ app.get("/get/searchitem",searchItems)
   function searchItems (request, response) {
     //begin here
     var searchField = request.query.taskname;
-    //uncomment to see the searchField passed in
-    //console.log(searchField);
+    console.log(searchField);
 
     var json = JSON.parse (fs.readFileSync('database.json'));
     returnData = json.filter(jsondata => jsondata.Task === searchField);
-
-    //uncomment to see the todolists found in the backend service// 
-    //console.log(returnData);
+    console.log(returnData);
+    
     response.json(returnData);
-    //Note this won't work, why? response.send();
+    response.send();
   }
+
+
