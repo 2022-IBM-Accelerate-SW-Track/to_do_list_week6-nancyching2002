@@ -29,6 +29,12 @@ app.get("/logout", (req, res) => {
   res.end();
 });
 
+app.post("/add/item", cookieAuth, addItem);
+
+app.get("/get/items", cookieAuth, getItems);
+
+app.get("/get/searchitem", cookieAuth, searchItems);
+
 const express = require("express"),
        app = express(),
        port = process.env.PORT || 8080,
